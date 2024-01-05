@@ -1,0 +1,13 @@
+version: '2'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 7861:7861
+    volumes:
+      - .:/app
+    environment:
+      - MYSTICAI_API_KEY=
