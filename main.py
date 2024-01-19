@@ -1,9 +1,9 @@
+import io
+import json
 import os
 
 import dotenv
 import gradio as gr
-import io
-import json
 import requests
 from PIL import Image
 
@@ -44,7 +44,7 @@ def sdxl_img2img(image, num_inference_steps, strength):
             {
                 "type": "dictionary",
                 "value": {
-                    "num_inference_steps": num_inference_steps,
+                    "num_inference_steps": int(num_inference_steps),
                     "strength": strength
                 }
             }
