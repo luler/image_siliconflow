@@ -5,6 +5,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    restart: always
     ports:
       - 7861:7861
     volumes:
