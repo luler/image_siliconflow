@@ -5,6 +5,7 @@ import os
 import dotenv
 import gradio as gr
 import requests
+import retrying
 from PIL import Image
 
 
@@ -24,6 +25,7 @@ def get_file_path(image):
 
 
 # 图生图
+@retrying.retry(stop_max_attempt_number=10, wait_fixed=1000)
 def sdxl_img2img(image, num_inference_steps, strength):
     headers = {
         "Content-Type": "application/json",
