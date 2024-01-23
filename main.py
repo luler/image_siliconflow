@@ -10,17 +10,17 @@ from PIL import Image
 
 # 上传文件
 def get_file_path(image):
-    image = Image.fromarray(image)
-    image_stream = io.BytesIO()
-    image.save(image_stream, format='JPEG')
-    image_stream.seek(0)
-    files = {"pfile": ('filename.jpg', image_stream)}
-    headers = {
-        'Authorization': 'Bearer ' + os.getenv('MYSTICAI_API_KEY'),
-    }
-    response = requests.post('https://www.mystic.ai/v3/pipeline_files', files=files, headers=headers)
-    data = response.json()
-    return data['path']
+    with Image.fromarray(image) as image:
+        with io.BytesIO() as image_stream:
+            image.save(image_stream, format='JPEG')
+            image_stream.seek(0)
+            files = {"pfile": ('filename.jpg', image_stream)}
+            headers = {
+                'Authorization': 'Bearer ' + os.getenv('MYSTICAI_API_KEY'),
+            }
+            with requests.post('https://www.mystic.ai/v3/pipeline_files', files=files, headers=headers) as response:
+                data = response.json()
+                return data['path']
 
 
 # 图生图
@@ -51,12 +51,12 @@ def sdxl_img2img(image, num_inference_steps, strength):
         ],
         "async_run": False
     }
-    response = requests.post('https://www.mystic.ai/v3/runs', data=json.dumps(data), headers=headers)
-    res = response.json()
-    image_url = res['result']['outputs'][0]['value'][0]['file']['url']
-    response = requests.get(image_url)
-    img = Image.open(io.BytesIO(response.content))
-    return img
+    with requests.post('https://www.mystic.ai/v3/runs', data=json.dumps(data), headers=headers) as response:
+        res = response.json()
+        image_url = res['result']['outputs'][0]['value'][0]['file']['url']
+        with requests.get(image_url) as image_response:
+            img = Image.open(io.BytesIO(image_response.content))
+            return img
 
 
 def dosomething(image, num_inference_steps, strength):
