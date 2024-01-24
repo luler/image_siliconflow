@@ -1,6 +1,7 @@
 import io
 import json
 import os
+import time
 
 import dotenv
 import gradio as gr
@@ -28,6 +29,7 @@ def get_file_path(image):
 # 图生图
 @retrying.retry(stop_max_attempt_number=10, wait_fixed=1000)
 def sdxl_img2img(file_path, num_inference_steps, strength):
+    time.sleep(1)  # 等1秒，防止No_resources_available状态
     headers = {
         "Content-Type": "application/json",
         'Authorization': 'Bearer ' + os.getenv('MYSTICAI_API_KEY'),
