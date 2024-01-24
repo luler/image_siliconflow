@@ -10,6 +10,7 @@ from PIL import Image
 
 
 # 上传文件
+@retrying.retry(stop_max_attempt_number=5, wait_fixed=1000)
 def get_file_path(image):
     with Image.fromarray(image) as image:
         with io.BytesIO() as image_stream:
@@ -26,7 +27,7 @@ def get_file_path(image):
 
 # 图生图
 @retrying.retry(stop_max_attempt_number=10, wait_fixed=1000)
-def sdxl_img2img(image, num_inference_steps, strength):
+def sdxl_img2img(file_path, num_inference_steps, strength):
     headers = {
         "Content-Type": "application/json",
         'Authorization': 'Bearer ' + os.getenv('MYSTICAI_API_KEY'),
@@ -41,7 +42,7 @@ def sdxl_img2img(image, num_inference_steps, strength):
             {
                 "type": "file",
                 "value": None,
-                "file_path": get_file_path(image)
+                "file_path": file_path
             },
             {
                 "type": "dictionary",
@@ -62,7 +63,8 @@ def sdxl_img2img(image, num_inference_steps, strength):
 
 
 def dosomething(image, num_inference_steps, strength):
-    return sdxl_img2img(image, num_inference_steps, strength)
+    file_path = get_file_path(image)
+    return sdxl_img2img(file_path, num_inference_steps, strength)
 
 
 # 这里是主程序的代码
