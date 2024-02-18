@@ -2,9 +2,10 @@ version: '3'
 
 services:
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: registry.cn-shenzhen.aliyuncs.com/luler/gradio_base
+    #    build:
+    #      context: .
+    #      dockerfile: Dockerfile
     restart: always
     ports:
       - 7861:7861
