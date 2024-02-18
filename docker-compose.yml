@@ -11,5 +11,5 @@ services:
       - 7861:7861
     volumes:
       - .:/app
-    environment:
-      - MYSTICAI_API_KEY=
+#    environment:
+#      - MYSTICAI_API_KEY=
