@@ -1,7 +1,7 @@
+import base64
 import io
 import json
 import os
-import time
 
 import dotenv
 import gradio as gr
@@ -10,63 +10,50 @@ import retrying
 from PIL import Image
 
 
-# 上传文件
-@retrying.retry(stop_max_attempt_number=5, wait_fixed=1000)
-def get_file_path(image):
-    with Image.fromarray(image) as image:
-        with io.BytesIO() as image_stream:
-            image.save(image_stream, format='JPEG')
-            image_stream.seek(0)
-            files = {"pfile": ('filename.jpg', image_stream)}
-            headers = {
-                'Authorization': 'Bearer ' + os.getenv('MYSTICAI_API_KEY'),
-            }
-            with requests.post('https://www.mystic.ai/v3/pipeline_files', files=files, headers=headers) as response:
-                data = response.json()
-                return data['path']
-
-
 # 图生图
-@retrying.retry(stop_max_attempt_number=10, wait_fixed=1000)
-def sdxl_img2img(file_path, num_inference_steps, strength):
-    time.sleep(1)  # 等1秒，防止No_resources_available状态
+@retrying.retry(stop_max_attempt_number=2, wait_fixed=1000)
+def sdxl_img2img(image, inference_steps, guidance_scale, image_size):
+    # 获取图像的宽度和高度
+    image_size = {
+        '1:1': '1024x1024',
+        '1:2': '1024x2048',
+        '3:2': '1536x1024',
+        '3:4': '1536x2048',
+        '16:9': '2048x1152',
+        '9:16': '1152x2048',
+    }[image_size]
+    # 将 PIL 图像保存到内存中的字节流
+    buffered = io.BytesIO()
+    image.save(buffered, format="PNG")
+    base64_string = base64.b64encode(buffered.getvalue()).decode('utf-8')
+
+    # 设置请求头
     headers = {
+        "Accept": "application/json",
         "Content-Type": "application/json",
-        'Authorization': 'Bearer ' + os.getenv('MYSTICAI_API_KEY'),
+        'Authorization': 'Bearer ' + os.getenv('SILICONFLOW_API_KEY'),
     }
+    # 设置请求参数
     data = {
-        "pipeline_id_or_pointer": "stabilityai/sdxl-img2img:v1",
-        "input_data": [
-            {
-                "type": "string",
-                "value": "fantastic anime style"
-            },
-            {
-                "type": "file",
-                "value": None,
-                "file_path": file_path
-            },
-            {
-                "type": "dictionary",
-                "value": {
-                    "num_inference_steps": int(num_inference_steps),
-                    "strength": strength
-                }
-            }
-        ],
-        "async_run": False
+        "prompt": "Transform all objects in the scene into a highly detailed and realistic anime style. Ensure that all characters have perfectly proportioned features including complete and natural-looking hands and fingers, and symmetrical, well-defined facial features with no distortions or anomalies. All objects should be rendered with vibrant and colorful details, smooth shading, and dynamic compositions. The style should resemble the works of Studio Ghibli or Makoto Shinkai, with meticulous attention to detail in every aspect, including backgrounds, clothing, and accessories. The overall image should be cohesive, with a harmonious blend of all elements.",
+        "image": base64_string,
+        "image_size": image_size,
+        "batch_size": 1,
+        "num_inference_steps": inference_steps,
+        "guidance_scale": guidance_scale
     }
-    with requests.post('https://www.mystic.ai/v3/runs', data=json.dumps(data), headers=headers) as response:
+
+    url = "https://api.siliconflow.cn/v1/stabilityai/stable-diffusion-xl-base-1.0/image-to-image"
+    with requests.post(url, data=json.dumps(data), headers=headers) as response:
         res = response.json()
-        image_url = res['result']['outputs'][0]['value'][0]['file']['url']
+        image_url = res['images'][0]['url']
         with requests.get(image_url) as image_response:
             img = Image.open(io.BytesIO(image_response.content))
             return img
 
 
-def dosomething(image, num_inference_steps, strength):
-    file_path = get_file_path(image)
-    return sdxl_img2img(file_path, num_inference_steps, strength)
+def dosomething(image, inference_steps, guidance_scale, image_size):
+    return sdxl_img2img(image, inference_steps, guidance_scale, image_size)
 
 
 # 这里是主程序的代码
@@ -74,12 +61,13 @@ if __name__ == "__main__":
     # 加载配置
     dotenv.load_dotenv()
     iis = [
-        gr.Image(label='选择原图'),
-        gr.Number(minimum=1, value=50),
-        gr.Slider(minimum=0, maximum=1, value=0.8)
+        gr.Image(label='选择原图', type='pil'),
+        gr.Number(minimum=1, maximum=50, value=20),
+        gr.Slider(minimum=0, maximum=20, value=7.5, step=0.1),
+        gr.Dropdown(['1:1', '1:2', '3:2', '3:4', '16:9', '9:16', ], label='生成图片比例', value='1:1')
     ]
     oo = gr.Image(label='生成的图片')
 
     demo = gr.Interface(dosomething, inputs=iis, outputs=oo, title='图片动漫化（基于Stable Diffusion模型）')
 
-    demo.launch(server_name='0.0.0.0', server_port=7861)
+    demo.launch(server_port=7861)

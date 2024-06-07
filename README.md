@@ -1,12 +1,14 @@
 # 图片动漫化（基于Stable Diffusion模型）
 
-本项目是基于mystic.ai提供的开放接口搭建的，只做学习测试使用
+本项目是基于siliconflow.cn提供的开放接口搭建的，只做学习测试使用
 
 ## 获取配置
-前往：https://www.mystic.ai/ ，注册并获取到api token（每月免费50美元可消耗，个人使用基本用不完）
+
+前往：https://cloud.siliconflow.cn/keys ，注册并获取到api token（注册赠送免费额度，可以满足个人基本使用）
 获取到token后，创建.env文件，输入并替换下面配置
+
 ```
-MYSTICAI_API_KEY=api token
+SILICONFLOW_API_KEY=api token
 ```
 
 ## 安装
