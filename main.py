@@ -70,4 +70,4 @@ if __name__ == "__main__":
 
     demo = gr.Interface(dosomething, inputs=iis, outputs=oo, title='图片动漫化（基于Stable Diffusion模型）')
 
-    demo.launch(server_port=7861)
+    demo.launch(server_name='0.0.0.0', server_port=7861)
