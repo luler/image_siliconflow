@@ -110,9 +110,10 @@ if __name__ == "__main__":
     # 加载配置
     dotenv.load_dotenv()
 
+    visible_tab = os.getenv('VISIBLE_TAB')
     # 定义每个选项卡中的内容
     with gr.Blocks() as demo:
-        with gr.Tab("图片动漫化"):
+        with gr.Tab("图片动漫化", visible=True if visible_tab == '' or visible_tab == 'tab1' else False):
             gr.Markdown(
                 "<h2 style='text-align: center;'>图片动漫化（基于Stable Diffusion模型）</h2>")  # Title for Tab 1
             with gr.Row():
@@ -128,7 +129,7 @@ if __name__ == "__main__":
 
             submit_btn_1.click(dosomething1, inputs=[input_1_1, input_1_2, input_1_3, input_1_4, ],
                                outputs=output_image_1)
-        with gr.Tab("FLUX.1-schnell(trial)"):
+        with gr.Tab("FLUX.1-schnell(trial)", visible=True if visible_tab == '' or visible_tab == 'tab2' else False):
             gr.Markdown("<h2 style='text-align: center;'>图片生成（基于FLUX.1-schnell模型）</h2>")  # Title for Tab 1
             with gr.Row():
                 with gr.Column():

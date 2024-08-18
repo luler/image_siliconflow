@@ -13,3 +13,4 @@ services:
       - .:/app
 #    environment:
 #      - SILICONFLOW_API_KEY=
+#      - VISIBLE_TAB=
