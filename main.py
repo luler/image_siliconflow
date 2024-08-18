@@ -118,14 +118,14 @@ if __name__ == "__main__":
                 "<h2 style='text-align: center;'>图片动漫化（基于Stable Diffusion模型）</h2>")  # Title for Tab 1
             with gr.Row():
                 with gr.Column():
-                    input_1_1 = gr.Image(label='选择原图', type='pil', height=400)
+                    input_1_1 = gr.Image(label='选择原图', type='pil')
                     input_1_2 = gr.Number(minimum=1, maximum=50, value=20)
                     input_1_3 = gr.Slider(minimum=0, maximum=20, value=7.5, step=0.1)
                     input_1_4 = gr.Dropdown(['1:1', '1:2', '3:2', '3:4', '16:9', '9:16', ], label='生成图片比例',
                                             value='1:1')
                     submit_btn_1 = gr.Button("提交", variant="primary")
                 with gr.Column():
-                    output_image_1 = gr.Image(label="生成的图片", height=400)
+                    output_image_1 = gr.Image(label="生成的图片")
 
             submit_btn_1.click(dosomething1, inputs=[input_1_1, input_1_2, input_1_3, input_1_4, ],
                                outputs=output_image_1)
@@ -140,7 +140,7 @@ if __name__ == "__main__":
                                             value='1:1')
                     submit_btn_2 = gr.Button("提交", variant="primary")
                 with gr.Column():
-                    output_image_2 = gr.Image(label="生成的图片", height=400)
+                    output_image_2 = gr.Image(label="生成的图片")
 
             submit_btn_2.click(dosomething2, inputs=[input_2_1, input_2_2, input_2_3, ],
                                outputs=output_image_2)
