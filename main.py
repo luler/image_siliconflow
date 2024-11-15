@@ -8,16 +8,15 @@ import gradio as gr
 import requests
 import retrying
 from PIL import Image
+from googletrans import Translator
+
+os.environ["no_proxy"] = "localhost,127.0.0.1,::1"
 
 
 @retrying.retry(stop_max_attempt_number=2, wait_fixed=1000)
 def translate(text):
-    with requests.get('https://lingva.thedaviddelta.com/api/v1/auto/en/' + text) as response:
-        text = ''
-        if response.status_code == 200:
-            data = response.json()
-            text = data['translation']
-        return text
+    translator = Translator(timeout=10)
+    return translator.translate(text, dest='en').text
 
 
 # 图生图
@@ -45,6 +44,7 @@ def sdxl_img2img(image, inference_steps, guidance_scale, image_size):
     }
     # 设置请求参数
     data = {
+        "model": "stabilityai/stable-diffusion-xl-base-1.0",
         "prompt": "Transform all objects in the scene into a highly detailed and realistic anime style. Ensure that all characters have perfectly proportioned features including complete and natural-looking hands and fingers, and symmetrical, well-defined facial features with no distortions or anomalies. All objects should be rendered with vibrant and colorful details, smooth shading, and dynamic compositions. The style should resemble the works of Studio Ghibli or Makoto Shinkai, with meticulous attention to detail in every aspect, including backgrounds, clothing, and accessories. The overall image should be cohesive, with a harmonious blend of all elements.",
         "image": base64_string,
         "image_size": image_size,
@@ -53,7 +53,7 @@ def sdxl_img2img(image, inference_steps, guidance_scale, image_size):
         "guidance_scale": guidance_scale
     }
 
-    url = "https://api.siliconflow.cn/v1/stabilityai/stable-diffusion-xl-base-1.0/image-to-image"
+    url = "https://api.siliconflow.cn/v1/images/generations"
     with requests.post(url, data=json.dumps(data), headers=headers) as response:
         res = response.json()
         image_url = res['images'][0]['url']
@@ -64,7 +64,7 @@ def sdxl_img2img(image, inference_steps, guidance_scale, image_size):
 
 # 图生图
 @retrying.retry(stop_max_attempt_number=2, wait_fixed=1000)
-def flux_schnell(prompt, inference_steps, image_size):
+def flux_schnell(prompt, image_size):
     # 获取图像的宽度和高度
     image_size = {
         '1:1': '1024x1024',
@@ -83,12 +83,13 @@ def flux_schnell(prompt, inference_steps, image_size):
     }
     # 设置请求参数
     data = {
+        "model": "black-forest-labs/FLUX.1-schnell",
         "prompt": prompt,
         "image_size": image_size,
-        "num_inference_steps": inference_steps,
     }
 
-    url = "https://api.siliconflow.cn/v1/black-forest-labs/FLUX.1-schnell/text-to-image"
+    # 参考：https://docs.siliconflow.cn/api-reference/images/images-generations
+    url = "https://api.siliconflow.cn/v1/images/generations"
     with requests.post(url, data=json.dumps(data), headers=headers) as response:
         res = response.json()
         image_url = res['images'][0]['url']
@@ -101,8 +102,8 @@ def dosomething1(image, inference_steps, guidance_scale, image_size):
     return sdxl_img2img(image, inference_steps, guidance_scale, image_size)
 
 
-def dosomething2(prompt, inference_steps, image_size):
-    return flux_schnell(translate(prompt), inference_steps, image_size)
+def dosomething2(prompt, image_size):
+    return flux_schnell(translate(prompt), image_size)
 
 
 # 这里是主程序的代码
@@ -119,8 +120,8 @@ if __name__ == "__main__":
             with gr.Row():
                 with gr.Column():
                     input_1_1 = gr.Image(label='选择原图', type='pil')
-                    input_1_2 = gr.Number(minimum=1, maximum=50, value=20)
-                    input_1_3 = gr.Slider(minimum=0, maximum=20, value=7.5, step=0.1)
+                    input_1_2 = gr.Number(minimum=1, maximum=50, value=20, label='inference_steps')
+                    input_1_3 = gr.Slider(minimum=0, maximum=20, value=7.5, step=0.1, label='guidance_scale')
                     input_1_4 = gr.Dropdown(['1:1', '1:2', '3:2', '3:4', '16:9', '9:16', ], label='生成图片比例',
                                             value='1:1')
                     submit_btn_1 = gr.Button("提交", variant="primary")
@@ -134,7 +135,7 @@ if __name__ == "__main__":
             with gr.Row():
                 with gr.Column():
                     input_2_1 = gr.Textbox(label='图片描述')
-                    input_2_2 = gr.Number(label='num_inference_steps', minimum=1, maximum=100, value=20)
+                    # input_2_2 = gr.Number(label='num_inference_steps', minimum=1, maximum=100, value=20)
                     input_2_3 = gr.Dropdown(label='生成图片比例',
                                             choices=['1:1', '1:2', '3:2', '3:4', '16:9', '9:16', ],
                                             value='1:1')
@@ -142,7 +143,6 @@ if __name__ == "__main__":
                 with gr.Column():
                     output_image_2 = gr.Image(label="生成的图片")
 
-            submit_btn_2.click(dosomething2, inputs=[input_2_1, input_2_2, input_2_3, ],
-                               outputs=output_image_2)
+            submit_btn_2.click(dosomething2, inputs=[input_2_1, input_2_3, ], outputs=output_image_2)
 
-    demo.launch(server_name='0.0.0.0', server_port=7861)
+    demo.launch(server_name='0.0.0.0', server_port=7861, share=False)
